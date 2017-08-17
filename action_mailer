@@ -1,0 +1,45 @@
+Rails提供的Mailer與Controller相似，相關檔案在app/mailers，與信件有關的view在app/views。
+
+能夠使用generator生成mailer，將產生mailer、信件內容的view與測試檔案，若不用產生器，mailer繼承自ActionMailer::Base。
+
+在mailer裡頭編寫action、自訂參數，用法與controller類似，自訂如下：
+
+class ContactMailer < ApplicationMailer
+  default from: "service@thatscool.com"
+
+  def contact_email(contact)
+    @contact = contact
+   mail(to: @user.email, from: @contact[:email], subject: @contact[:title])
+  end
+
+end
+
+使用mailer寄出的信會使用default hash作預設值，mail的設定則是to、from和subject等的header。mailer定義的instance variable都能在view取用，mailer的view採用html格式，也能夠使用*.txt.erb的純文字格式。
+
+由controller呼叫mailer：
+
+class ContactsController < ApplicationController
+
+ def create
+  @contact = Contact.new(new_params)
+  if @contact.save
+   ContactMailer.contact_email(@contact).deliver
+   redirect_to :back
+  else
+   render :new
+  end
+ end
+end
+
+有著deliver、deliver_now和deliver_later等三種方法。
+
+
+Action Mailer常用的methods：headers、attachments和mail
+
+header用來指定信件標頭，用hash傳入key、value
+
+attachments可加上附件，如：
+
+attachments['file-name.jpg'] = File.read('file-name.jpg')
+
+mail則是實際寄出的信件內容。
