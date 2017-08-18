@@ -36,4 +36,46 @@ But it makes you a little uncomfortable. publication_status lives in a nebulous 
 
 Now your helper method can either switch based on the input class type (poor Ruby style), or you break it out into two methods, book_publication_status and article_publication_status. And keep adding methods for each publication type...to the global helper namespace. And you'll have to remember all the names. Ick.
 
+到此會有點不適應，發佈狀態存在於模糊的namespace，散步在所有controller與view。此後，你會想讓發佈狀態像書般的顯示出來，你設計的呼叫會稍稍地和書讓的日期格式有些不同。
+
+
+Ruby thrives when we use Object-Oriented style. If you didn't know Rails' helpers existed, you'd probably imagine that your view template could feature something like this:
+
+<%= @article.publication_status %>
+
+Ruby因我們使用物件導向而茁壯，若不清楚Rails helpers的存在，可能會認為view template的特性如程式碼：
+<%= @article.publication_status %>
+
+
+
+Without a decorator, you'd have to implement the publication_status method in the Article model. That method is presentation-centric, and thus does not belong in a model.
+
+Instead, you implement a decorator:
+
+# app/decorators/article_decorator.rb
+class ArticleDecorator < Draper::Decorator
+  delegate_all
+
+  def publication_status
+    if published?
+      "Published at #{published_at}"
+    else
+      "Unpublished"
+    end
+  end
+
+  def published_at
+    object.published_at.strftime("%A, %B %e")
+  end
+end
+
+Within the publication_status method we use the published? method. Where does that come from? It's a method of the source Article, whose methods have been made available on the decorator by the delegate_all call above.
+
+You might have heard this sort of decorator called a "presenter", an "exhibit", a "view model", or even just a "view" (in that nomenclature, what Rails calls "views" are actually "templates"). Whatever you call it, it's a great way to replace procedural helpers like the one above with "real" object-oriented programming.
+
+Decorators are the ideal place to:
+
+    format complex data for user display
+    define commonly-used representations of an object, like a name method that combines first_name and last_name attributes
+    mark up attributes with a little semantic HTML, like turning a url field into a hyperlink
 
